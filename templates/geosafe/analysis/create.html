@@ -3,249 +3,318 @@
 {% load staticfiles %}
 {% load i18n avatar_tags %}
 {% block extra_head %}
-<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css"/>
-<link rel="stylesheet" href="{% static 'geosafe/css/easy-button.css' %}"/>
-<link rel="stylesheet" href="{% static 'geosafe/css/main.css' %}" />
-<style type="text/css">
- html, body, #wrap {
-    height: 100%;
-    width: 100%;
-     padding-top: 0;
-     padding-bottom: 0;
- }
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css"/>
+    <link rel="stylesheet" href="{% static 'geosafe/css/easy-button.css' %}"/>
+    <link rel="stylesheet" href="{% static 'geosafe/css/main.css' %}"/>
+    <style type="text/css">
+        html, body, #wrap {
+            height: 100%;
+            width: 100%;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
 
- .section.brand a {
-{#     background: url('{% static 'geosafe/img/logo-geonode.png' %}') 15px 0 no-repeat;#}
- }
+        .section.brand a {
+        {#     background: url('{% static 'geosafe/img/logo-geonode.png' %}') 15px 0 no-repeat;#}
+        }
 
- .options-panel {
-    position: fixed;
-    left: 0;
-    width: 70px;
-    height: 100%;
-    background: #333333;
-    color: #757575;
-    text-align: center;
-    font-size: 12px;
-    z-index: 200;
-}
-.options-panel .option {
-    position: relative;
-    margin: 11px 0;
-}
-.option > a, .search > a, .report > a {
-    color: #757575;
-    text-decoration: none;
-    font-size: 22px;
-    display: block;
-    margin: 0 12px;
-    height: 40px;
-    width: 40px;
-    position: relative;
-    -moz-border-radius: 5px;
-    -webkit-border-radius: 5px;
-    border-radius: 5px;
-}
-.options-panel .option:first-child {
-    margin-top:0;
-}
-.options-panel .option:last-child {
-    margin-bottom:0;
-}
-.options-panel svg, .options-panel i {
-    position:absolute;
-    top:0;
-    bottom:0;
-    left: 0;
-    right: 0;
-    width: 30px;
-    height: 20px;
-    margin:auto;
-}
-.options-panel .section {
-    padding: 10px 0;
-    border-bottom: 1px solid #6d6c6c;
-}
-.options-panel .section-title {
-    line-height: 12px;
-    margin: 0 0 10px;
-    font-weight: normal;
-    font-size: 12px;
-}
-a:hover .svg path, a.selected .svg path {
-    fill: #fff;
-}
-a.set {
-    border: 2px solid #50cf5c;
-}
-a.set .svg path {
-    fill: #50cf5c;
-}
-a.set i {
-    color: #50cf5c;
-}
-a:not(.set).one{
-    border: 2px solid #3db2dd;
-}
-a:not(.set).one .svg path {
-    fill: #3db2dd;
-}
-a:not(.set):hover i {
-  color: #fff;
-}
-.options-panel .search a {
-    height: auto;
-}
-.options-panel .search a:hover, .options-panel .option > a.inactive:hover {
-    background: none;
-}
-.options-panel .inactive .svg path {
-    fill: #181818;
-}
-.options-panel a.has-children:after {
-    content: "";
-    position: absolute;
-    top: 16px;
-    right: -7px;
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 6.5px 0 6.5px 7px;
-    border-color: transparent transparent transparent #757575;
-}
-.options-panel a.has-children.set:after, .options-panel a.has-children.set:hover:after{
-    top: 14px;
-    right: -9px;
-    border-color: transparent transparent transparent #50cf5c;
-}
-.options-panel a.one:after, .options-panel a.one:hover:after{
-    border: 0;
-}
-.options-panel a.has-children:hover:after, .options-panel a.has-children.selected:after {
-    border-color: transparent transparent transparent #515151;
-}
-.options-panel .list {
-    display: none;
-    position: absolute;
-    left: 82px;
-    top: 0;
-    min-width: 160px;
-    background: rgba(51,51,51,0.95);
-    -moz-border-radius: 5px;
-    -webkit-border-radius: 5px;
-    border-radius: 5px;
-    overflow: hidden;
-}
-.options-panel .list.show {
-    display: block;
-}
-.options-panel .list:hover {
-    display: block;
-}
-#impact-function.loading svg, #impact-function i {
-    display: none;
-}
-#impact-function.loading i, #impact-function svg {
-    display: block;
-}
-.list-title {
-    font-size: 14px;
-    margin: 0;
-    padding-left: 10px;
-    padding-right: 10px;
-    line-height: 40px;
-    color: #fff;
-    background:  rgba(24,24,24,0.5);
-    position: relative;
-    white-space: nowrap;
-}
-.list ul {
-    padding-left: 10px;
-    padding-right: 10px;
-    line-height: 30px;
-    font-size: 14px;
-}
-.list ul a {
-    font-size: 14px;
-    color: #979797;
-    text-decoration: none;
-    white-space: nowrap;
-}
-.list ul a:hover, .list ul li.selected a, .list ul li.selected {
-    color: #fff;
-}
+        .section {
+            position: relative;
+            cursor: pointer;
+        }
 
-.list-title:after {
-    position: absolute;
-    left: -7px;
-    top: 17px;
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 6.5px 7px 6.5px 0;
-    border-color: transparent rgba(244,244,244,0.9) transparent transparent;
-}
-.list ul .selected a, .list ul .selected {
-    color: #50cf5c;
-}
+        .section.set>h4 {
+            color: #50cf5c;
+        }
 
-.list li{
-    text-align: left;
-    padding-left: 20px;
-    padding-right: 20px;
-}
+        .section:hover{
+            color: #fff
+        }
 
-.leaflet-top, .leaflet-bottom{
-    z-index: 10;
-}
+        .section-panel {
+            position: absolute;
+            left: 85px;
+            top: 0;
+            background: #333333;
+            float: left;
+            display: none;
+            padding: 10px 0;
+            border-radius: 8px;
+        }
 
-.leaflet-bottom{
-    bottom: 46px;
-}
+        .section.show .section-panel {
+            display: block;
+        }
 
-.status-bar{
-    position: fixed;
-    bottom: 0;
-    background: rgba(51,51,51,0.8);
-    color: #757575;
-    width: 100%;
-    height: 46px;
-}
+        .options-panel {
+            position: fixed;
+            left: 0;
+            width: 70px;
+            height: 100%;
+            background: #333333;
+            color: #757575;
+            text-align: center;
+            font-size: 12px;
+            z-index: 200;
+        }
 
-.info-box{
-    vertical-align: middle;
-    float: none;
-    color: #fff;
-}
+        .options-panel .option {
+            position: relative;
+            margin: 11px 0;
+        }
 
-.info-text{
-    color: #979797;
-}
+        .option > a, .search > a, .report > a {
+            color: #757575;
+            text-decoration: none;
+            font-size: 22px;
+            display: block;
+            margin: 0 12px;
+            height: 40px;
+            width: 40px;
+            position: relative;
+            -moz-border-radius: 5px;
+            -webkit-border-radius: 5px;
+            border-radius: 5px;
+        }
 
-.btn .fa-check{
-    display: none;
-}
-.btn.active .fa-check{
-    display: inline-block;
-    color: #50cf5c;
-}
-.btn .fa-close{
-    display: inline-block;
-    color: #f15a2b;
-}
-.btn.active .fa-close{
-    display: none;
-}
-.btn.processing .fa-close{
-    display: none;
-}
-.btn .fa-spinner{
-    display: none;
-}
-.btn.processing .fa-spinner{
-    display: inline-block;
-}
- </style>
+        .options-panel .option:first-child {
+            margin-top: 0;
+        }
+
+        .options-panel .option:last-child {
+            margin-bottom: 0;
+        }
+
+        .options-panel svg, .options-panel i {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 30px;
+            height: 20px;
+            margin: auto;
+        }
+
+        .options-panel .section {
+            padding: 10px 0;
+            border-bottom: 1px solid #6d6c6c;
+        }
+
+        .options-panel .section-title {
+            line-height: 12px;
+            margin: 24px 0;
+            font-weight: normal;
+            font-size: 12px;
+        }
+
+        .option{
+            display: inline-block;
+        }
+
+        a:hover .svg path, a.selected .svg path {
+            fill: #fff;
+        }
+
+        a.set {
+            border: 2px solid #50cf5c;
+        }
+
+        a.set .svg path {
+            fill: #50cf5c;
+        }
+
+        a.set i {
+            color: #50cf5c;
+        }
+
+        a:not(.set).one {
+            border: 2px solid #3db2dd;
+        }
+
+        a:not(.set).one .svg path {
+            fill: #3db2dd;
+        }
+
+        a:not(.set):hover i {
+            color: #fff;
+        }
+
+        .options-panel .search a {
+            height: auto;
+        }
+
+        .options-panel .search a:hover, .options-panel .option > a.inactive:hover {
+            background: none;
+        }
+
+        .options-panel .inactive .svg path {
+            fill: #181818;
+        }
+
+        .options-panel a.has-children:after {
+            content: "";
+            position: absolute;
+            top: 16px;
+            right: -7px;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 6.5px 0 6.5px 7px;
+            border-color: transparent transparent transparent #757575;
+        }
+
+        .options-panel a.has-children.set:after, .options-panel a.has-children.set:hover:after {
+            top: 14px;
+            right: -9px;
+            border-color: transparent transparent transparent #50cf5c;
+        }
+
+        .options-panel a.one:after, .options-panel a.one:hover:after {
+            border: 0;
+        }
+
+        .options-panel a.has-children:hover:after, .options-panel a.has-children.selected:after {
+            border-color: transparent transparent transparent #515151;
+        }
+
+        .options-panel .list {
+            display: none;
+            position: absolute;
+            left: 82px;
+            top: 0;
+            min-width: 160px;
+            background: rgba(51, 51, 51, 0.95);
+            -moz-border-radius: 5px;
+            -webkit-border-radius: 5px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .options-panel .list.show {
+            display: block;
+        }
+
+        .options-panel .list:hover {
+            display: block;
+        }
+
+        #impact-function.loading svg, #impact-function i {
+            display: none;
+        }
+
+        #impact-function.loading i, #impact-function svg {
+            display: block;
+        }
+
+        .list-title {
+            font-size: 14px;
+            margin: 0;
+            padding-left: 10px;
+            padding-right: 10px;
+            line-height: 40px;
+            color: #fff;
+            background: rgba(24, 24, 24, 0.5);
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .list ul {
+            padding-left: 10px;
+            padding-right: 10px;
+            line-height: 30px;
+            font-size: 14px;
+        }
+
+        .list ul a {
+            font-size: 14px;
+            color: #979797;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .list ul a:hover, .list ul li.selected a, .list ul li.selected {
+            color: #fff;
+        }
+
+        .list-title:after {
+            position: absolute;
+            left: -7px;
+            top: 17px;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 6.5px 7px 6.5px 0;
+            border-color: transparent rgba(244, 244, 244, 0.9) transparent transparent;
+        }
+
+        .list ul .selected a, .list ul .selected {
+            color: #50cf5c;
+        }
+
+        .list li {
+            text-align: left;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .leaflet-top, .leaflet-bottom {
+            z-index: 10;
+        }
+
+        .leaflet-bottom {
+            bottom: 46px;
+        }
+
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            background: rgba(51, 51, 51, 0.8);
+            color: #757575;
+            width: 100%;
+            height: 46px;
+        }
+
+        .info-box {
+            vertical-align: middle;
+            float: none;
+            color: #fff;
+        }
+
+        .info-text {
+            color: #979797;
+        }
+
+        .btn .fa-check {
+            display: none;
+        }
+
+        .btn.active .fa-check {
+            display: inline-block;
+            color: #50cf5c;
+        }
+
+        .btn .fa-close {
+            display: inline-block;
+            color: #f15a2b;
+        }
+
+        .btn.active .fa-close {
+            display: none;
+        }
+
+        .btn.processing .fa-close {
+            display: none;
+        }
+
+        .btn .fa-spinner {
+            display: none;
+        }
+
+        .btn.processing .fa-spinner {
+            display: inline-block;
+        }
+    </style>
 {% endblock extra_head %}
 
 {% block header %}
@@ -254,125 +323,150 @@ a:not(.set):hover i {
 
 
 {% block body_outer %}
-</div><!-- close .container -->
-<div class="options-panel">
-{#    <div class="search section"> <a href="#" id="search-call"><i class="fa fa-search"></i></a> </div>#}
-    <div class="brand section">
-        <a href="{% url "home" %}"
-           title="Go To Geonode Homepage"
-           data-toggle="tooltip"
-           data-placement="right">
-            <img src="{% static 'geosafe/img/logo-geonode.png' %}"
-                 href="{% url "home" %}"/>
-        </a>
+    </div><!-- close .container -->
+    <div class="options-panel">
+        {#    <div class="search section"> <a href="#" id="search-call"><i class="fa fa-search"></i></a> </div>#}
+        <div class="brand section">
+            <a href="{% url "home" %}"
+               title="Go To Geonode Homepage"
+               data-toggle="tooltip"
+               data-placement="right">
+                <img src="{% static 'geosafe/img/logo-geonode.png' %}"
+                     href="{% url "home" %}"/>
+            </a>
+        </div>
+        <div class="layer-list">
+            {% include "geosafe/analysis/options_panel.html" %}
+        </div>
     </div>
-    <div class="layer-list">
-        {% include "geosafe/analysis/options_panel.html" %}
+    <!-- Waiting Analysis Modal -->
+    {% include "geosafe/analysis/modal/waiting_analysis.html" %}
+    {% include "geosafe/analysis/modal/analysis_confirmation.html" %}
+    {% include "geosafe/analysis/modal/impact_card.html" %}
+    {% include "geosafe/analysis/modal/iframe_modal.html" %}
+    <div id="map" style="width: 100%; height: 100%; position:relative; margin-left: 70px; ">
+        {#    <div id="form-div" style="display: none;position: absolute; width: 30%; z-index: 100; top: 0; right: 0; background-color: transparent">#}
+        {#        <form action="" method="post" enctype="multipart/form-data">#}
+        {#            {% csrf_token %}#}
+        {#            {{ form|as_bootstrap }}#}
+        {#            <button type="submit" class="btn btn-primary">Run</button>#}
+        {#        </form>#}
+        {#    </div>#}
     </div>
-</div>
-<!-- Waiting Analysis Modal -->
-{% include "geosafe/analysis/modal/waiting_analysis.html" %}
-{% include "geosafe/analysis/modal/analysis_confirmation.html" %}
-{% include "geosafe/analysis/modal/impact_card.html" %}
-{% include "geosafe/analysis/modal/iframe_modal.html" %}
-<div id="map" style="width: 100%; height: 100%; position:relative; margin-left: 70px; ">
-{#    <div id="form-div" style="display: none;position: absolute; width: 30%; z-index: 100; top: 0; right: 0; background-color: transparent">#}
-{#        <form action="" method="post" enctype="multipart/form-data">#}
-{#            {% csrf_token %}#}
-{#            {{ form|as_bootstrap }}#}
-{#            <button type="submit" class="btn btn-primary">Run</button>#}
-{#        </form>#}
-{#    </div>#}
-</div>
 {% endblock body_outer %}
 
 {% block footer %}
-<div class="status-bar">
-    <div class="info-box text-center panel-body">
-        <span class="info-title panel-title panel-heading"></span>
-        <span class="info-text"></span>
+    <div class="status-bar">
+        <div class="info-box text-center panel-body">
+            <span class="info-title panel-title panel-heading"></span>
+            <span class="info-text"></span>
+        </div>
     </div>
-</div>
 {% endblock %}
 
-{% block extra_script %} 
-<script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
-<script type="text/javascript" src="{% static 'geosafe/js/easy-button.js' %}"></script>
-<script type="text/javascript" src="{% static 'geosafe/js/analysis.js' %}"></script>
+{% block extra_script %}
+    <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+    <script type="text/javascript" src="{% static 'geosafe/js/easy-button.js' %}"></script>
+    <script type="text/javascript" src="{% static 'geosafe/js/analysis.js' %}"></script>
 
-<script type="text/javascript">
-function init_layer_panel(){
-    jQuery('img.svg').each(function () {
-        var $img = jQuery(this);
-        var imgID = $img.attr('id');
-        var imgClass = $img.attr('class');
-        var imgURL = $img.attr('src');
+    <script type="text/javascript">
+        function init_layer_panel() {
+            jQuery('img.svg').each(function () {
+                var $img = jQuery(this);
+                var imgID = $img.attr('id');
+                var imgClass = $img.attr('class');
+                var imgURL = $img.attr('src');
 
-        jQuery.get(imgURL, function (data) {
-            // Get the SVG tag, ignore the rest
-            var $svg = jQuery(data).find('svg');
+                jQuery.get(imgURL, function (data) {
+                    // Get the SVG tag, ignore the rest
+                    var $svg = jQuery(data).find('svg');
 
-            // Add replaced image's ID to the new SVG
-            if (typeof imgID !== 'undefined') {
-                $svg = $svg.attr('id', imgID);
-            }
-            // Add replaced image's classes to the new SVG
-            if (typeof imgClass !== 'undefined') {
-                $svg = $svg.attr('class', imgClass + ' replaced-svg');
-            }
+                    // Add replaced image's ID to the new SVG
+                    if (typeof imgID !== 'undefined') {
+                        $svg = $svg.attr('id', imgID);
+                    }
+                    // Add replaced image's classes to the new SVG
+                    if (typeof imgClass !== 'undefined') {
+                        $svg = $svg.attr('class', imgClass + ' replaced-svg');
+                    }
 
-            // Remove any invalid XML tags as per http://validator.w3.org
-            $svg = $svg.removeAttr('xmlns:a');
+                    // Remove any invalid XML tags as per http://validator.w3.org
+                    $svg = $svg.removeAttr('xmlns:a');
 
-            // Check if the viewport is set, if the viewport is not set the SVG wont't scale.
-            if (!$svg.attr('viewBox') && $svg.attr('height') && $svg.attr('width')) {
-                $svg.attr('viewBox', '0 0 ' + $svg.attr('height') + ' ' + $svg.attr('width'))
-            }
+                    // Check if the viewport is set, if the viewport is not set the SVG wont't scale.
+                    if (!$svg.attr('viewBox') && $svg.attr('height') && $svg.attr('width')) {
+                        $svg.attr('viewBox', '0 0 ' + $svg.attr('height') + ' ' + $svg.attr('width'))
+                    }
 
-            // Replace image with new SVG
-            $img.replaceWith($svg);
+                    // Replace image with new SVG
+                    $img.replaceWith($svg);
 
-        }, 'xml');
+                }, 'xml');
 
-    });
-    var last_click;
-    $(".option>a").click(function () {
-        {# special case when only contains one layer #}
-        var $list_box = $(this).next().filter(".list");
-        if($(this).hasClass('one')){
-            {# automatically click the only layer #}
-            $list_box.find("a")[0].click();
-            return;
+            });
+{#            Initialize click behaviour of sections#}
+            (function(){
+                var last_click;
+                $(".section").click(function(){
+{#                    Show section panel#}
+                    var $section_panel = $(".section-panel", this);
+                    if(last_click != this){
+                        $(".section-panel", last_click).removeClass("show");
+                    }
+{#                    Only toggled if it's not hovering over its section_panel#}
+                    if(!$section_panel.is(":hover")){
+                        $section_panel.toggleClass("show");
+                    }
+
+                    last_click = this;
+
+{#                    if layer is set, set green color to section#}
+                    if((".set", $section_panel)){
+                        $section_panel.addClass("set");
+                    }
+                    else{
+                        $section_panel.removeClass("set");
+                    }
+                });
+            })();
+            var last_click;
+            $(".option>a").click(function () {
+                {# special case when only contains one layer #}
+                var $list_box = $(this).next().filter(".list");
+                if ($(this).hasClass('one')) {
+                    {# automatically click the only layer #}
+                    $list_box.find("a")[0].click();
+                    return;
+                }
+                if (last_click != this) {
+                    $(last_click).next().filter(".list").removeClass("show");
+                }
+                $list_box.toggleClass("show");
+
+                {# correcting position for impact #}
+                if ($list_box.closest("#impact-option").length > 0) {
+                    var box_height = $list_box.height();
+                    var pos_y = -box_height + 40;
+                    $list_box.css("top", pos_y);
+                }
+                last_click = this;
+            });
+            var $analysis_form = $(".impact.section form");
+            $analysis_form.on('submit', function (e) {
+                {# prevent form submit by default #}
+                $("#confirm_hazard_title").val(hazard_layer_cbo.find('option:selected').text());
+                $("#confirm_exposure_title").val(exposure_layer_cbo.find('option:selected').text());
+                $("#confirm_impact_title").val(impact_function_cbo.find('option:selected').text());
+                $("#analysis-confirmation-modal").modal();
+                return false;
+            });
         }
-        if(last_click!=this){
-            $(last_click).next().filter(".list").removeClass("show");
-        }
-        $list_box.toggleClass("show");
 
-        {# correcting position for impact #}
-        if($list_box.closest("#impact-option").length > 0){
-            var box_height = $list_box.height();
-            var pos_y = -box_height + 40;
-            $list_box.css("top", pos_y);
-        }
-        last_click=this;
-    });
-    var $analysis_form = $(".report.section form");
-    $analysis_form.on('submit', function(e){
-        {# prevent form submit by default #}
-        $("#confirm_hazard_title").val(hazard_layer_cbo.find('option:selected').text());
-        $("#confirm_exposure_title").val(exposure_layer_cbo.find('option:selected').text());
-        $("#confirm_impact_title").val(impact_function_cbo.find('option:selected').text());
-        $("#analysis-confirmation-modal").modal();
-        return false;
-    });
-}
-
-$(document).ready(function () {
-    init_layer_panel()
-});
-</script>
-<script type="text/javascript">
+        $(document).ready(function () {
+            init_layer_panel()
+        });
+    </script>
+    <script type="text/javascript">
         var map;
 
         var exposure_layer;
@@ -418,7 +512,7 @@ $(document).ready(function () {
                     $li.appendTo(ul);
                 }
 
-                if(data.length > 1){
+                if (data.length > 1) {
                     if_function.addClass("has-children");
                 }
 
@@ -426,22 +520,22 @@ $(document).ready(function () {
                     var id = data[i]['id'];
                     var name = data[i]['name'];
                     $("<option></option>").val(id).text(name).appendTo(select);
-                    var $a = $("<a></a>").attr('href', 'javascript:select_if("'+id+'")').attr('data-id', id).text(name);
+                    var $a = $("<a></a>").attr('href', 'javascript:select_if("' + id + '")').attr('data-id', id).text(name);
                     var $li = $("<li></li>");
                     $li.append($a);
                     $li.appendTo(ul);
                 }
 
-                if(data.length==1){
-{#                     only for lone data#}
+                if (data.length == 1) {
+                    {#                     only for lone data#}
                     select_if(data[0]['id']);
-                    show_info_text('InaSAFE Impact Function', 'Automatically select '+data[0]['name']);
+                    show_info_text('InaSAFE Impact Function', 'Automatically select ' + data[0]['name']);
                 }
-                else if(data.length==0){
-{#                    deselect Impact function#}
+                else if (data.length == 0) {
+                    {#                    deselect Impact function#}
                     select_if(undefined);
                 }
-            }).fail(function(){
+            }).fail(function () {
                 var select = $("#id_impact_function_id");
                 var ul = $("#impact-function-list").find('ul');
                 select.empty();
@@ -450,18 +544,18 @@ $(document).ready(function () {
             });
         };
 
-        function select_if(function_id){
+        function select_if(function_id) {
 
             var $if_section = $("#impact-function");
             var $if_section_list = $("#impact-function-list");
 
-            if(!function_id){
+            if (!function_id) {
                 impact_function_cbo.val(undefined);
                 $if_section.removeClass("set");
-                $if_section_list.find("a:contains("+function_id+")")
-                        .removeClass("selected");
+                $if_section_list.find("a:contains(" + function_id + ")")
+                    .removeClass("selected");
 
-                $(".report.section form button[type=submit]").prop("disabled", true);
+                $(".impact.section form button[type=submit]").prop("disabled", true);
                 return
             }
 
@@ -469,15 +563,15 @@ $(document).ready(function () {
 
             // update styles
             $if_section.addClass("set");
-            $if_section_list.find("a[data-id="+function_id+"]").addClass("selected");
+            $if_section_list.find("a[data-id=" + function_id + "]").addClass("selected");
 
             console.log('Selected data:');
-            console.log('Exposure : '+exposure_layer_cbo.val());
-            console.log('Hazard : '+hazard_layer_cbo.val());
-            console.log('Impact Function : '+impact_function_cbo.val());
+            console.log('Exposure : ' + exposure_layer_cbo.val());
+            console.log('Hazard : ' + hazard_layer_cbo.val());
+            console.log('Impact Function : ' + impact_function_cbo.val());
 
             // validate button
-            $(".report.section form button[type=submit]").prop("disabled", false);
+            $(".impact.section form button[type=submit]").prop("disabled", false);
         }
 
         function zoom_to_box(map, bbox) {
@@ -490,9 +584,9 @@ $(document).ready(function () {
 
         function add_layer(map, layer_tiles_url, layer) {
             layer = L.tileLayer(layer_tiles_url,
-                    {
-                        'opacity': 0.8
-                    });
+                {
+                    'opacity': 0.8
+                });
             if (layer != null) {
                 map.addLayer(layer);
                 return layer;
@@ -520,7 +614,7 @@ $(document).ready(function () {
                     aggregation_layer = add_layer(map, layer_tiles_url, aggregation_layer);
                     aggregation_layer.setZIndex(2);
                 }
-                else if (layer_purpose == 'impact'){
+                else if (layer_purpose == 'impact') {
                     impact_layer = add_layer(map, layer_tiles_url, impact_layer);
                     impact_layer.setZIndex(3);
                 }
@@ -530,9 +624,9 @@ $(document).ready(function () {
         function update_exposure_layer(layer_id, is_update_map) {
             console.log('exposure changed to ' + layer_id);
 
-{#            deselect if it is the same#}
-            var no_layer_id_exists = layer_id != undefined && $(".exposure.section a[data-id='"+layer_id+"']").length == 0;
-            if(exposure_layer_cbo.val() == layer_id || no_layer_id_exists){
+            {#            deselect if it is the same#}
+            var no_layer_id_exists = layer_id != undefined && $(".exposure.section a[data-id='" + layer_id + "']").length == 0;
+            if (exposure_layer_cbo.val() == layer_id || no_layer_id_exists) {
                 update_exposure_layer(undefined);
                 return;
             }
@@ -547,14 +641,22 @@ $(document).ready(function () {
             $exposure_sections.find(">a").removeClass("set");
             $exposure_sections.find("ul>li>a").removeClass("selected");
             // find section of the id
-            var $a = $exposure_sections.find("a[data-id="+layer_id+"]");
+            var $a = $exposure_sections.find("a[data-id=" + layer_id + "]");
             console.log($a);
             $a.addClass("selected");
             var $section = $a.closest(".option");
             console.log($section);
             $section.find(">a").addClass("set");
 
-            if(is_update_map == false){
+            var $header = $(".exposure.section");
+            if($exposure_sections.find(".set").length == 0){
+                $header.removeClass("set");
+            }
+            else{
+                $header.addClass("set");
+            }
+
+            if (is_update_map == false) {
                 return;
             }
 
@@ -578,9 +680,9 @@ $(document).ready(function () {
         function update_hazard_layer(layer_id, is_update_map) {
             console.log('hazard changed to ' + layer_id);
 
-{#            deselect if it is the same#}
-            var no_layer_id_exists = layer_id != undefined && $(".hazard.section a[data-id='"+layer_id+"']").length == 0;
-            if(hazard_layer_cbo.val() == layer_id || no_layer_id_exists){
+            {#            deselect if it is the same#}
+            var no_layer_id_exists = layer_id != undefined && $(".hazard.section a[data-id='" + layer_id + "']").length == 0;
+            if (hazard_layer_cbo.val() == layer_id || no_layer_id_exists) {
                 update_hazard_layer(undefined);
                 return;
             }
@@ -595,14 +697,22 @@ $(document).ready(function () {
             $hazard_sections.find(">a").removeClass("set");
             $hazard_sections.find("ul>li>a").removeClass("selected");
             // find section of the id
-            var $a = $hazard_sections.find("a[data-id="+layer_id+"]");
+            var $a = $hazard_sections.find("a[data-id=" + layer_id + "]");
             console.log($a);
             $a.addClass("selected");
             var $section = $a.closest(".option");
             console.log($section);
             $section.find(">a").addClass("set");
 
-            if(is_update_map == false){
+            var $header = $(".hazard.section");
+            if($hazard_sections.find(".set").length == 0){
+                $header.removeClass("set");
+            }
+            else{
+                $header.addClass("set");
+            }
+
+            if (is_update_map == false) {
                 return;
             }
 
@@ -625,10 +735,10 @@ $(document).ready(function () {
         function update_impact_layer(layer_id, is_update_map) {
             console.log('impact changed to ' + layer_id);
 
-{#            deselect if it is the same#}
-            var no_layer_id_exists = layer_id != undefined && $("#impact-option a[data-id='"+layer_id+"']").length == 0;
+            {#            deselect if it is the same#}
+            var no_layer_id_exists = layer_id != undefined && $("#impact-option a[data-id='" + layer_id + "']").length == 0;
             var same_layer_id = last_impact_id == layer_id && last_impact_id != undefined;
-            if(same_layer_id || no_layer_id_exists){
+            if (same_layer_id || no_layer_id_exists) {
                 update_impact_layer(undefined);
                 return;
             }
@@ -644,17 +754,25 @@ $(document).ready(function () {
 
             $summary_section.find(">a").removeClass("set");
             // find section of the id
-            var $a = $impact_section.find("a[data-id="+layer_id+"]");
+            var $a = $impact_section.find("a[data-id=" + layer_id + "]");
             console.log($a);
             $a.addClass("selected");
             var $section = $a.closest(".option");
             console.log($section);
             $section.find(">a").addClass("set");
-            if($section.length > 0){
+            if ($section.length > 0) {
                 $summary_section.find(">a").addClass("set");
             }
 
-            if(is_update_map == false){
+            var $header = $(".report.section");
+            if($impact_section.find(".set").length == 0){
+                $header.removeClass("set");
+            }
+            else{
+                $header.addClass("set");
+            }
+
+            if (is_update_map == false) {
                 return;
             }
 
@@ -692,46 +810,46 @@ $(document).ready(function () {
             }
         }
 
-        function check_layer_empty(){
+        function check_layer_empty() {
             var exp_count = $(".exposure.section .option .list ul li").length;
             var haz_count = $(".hazard.section .option .list ul li").length;
 
-            if(exp_count + haz_count == 0){
+            if (exp_count + haz_count == 0) {
                 show_info_text(
-                        '<span class="text-danger">Extent Changed</span>',
-                        '<span class="alert-danger">No usable layer in current extent</span>',
-                        'alert-danger');
+                    '<span class="text-danger">Extent Changed</span>',
+                    '<span class="alert-danger">No usable layer in current extent</span>',
+                    'alert-danger');
             }
-            else if(exp_count == 0){
+            else if (exp_count == 0) {
                 show_info_text(
-                        '<span class="text-danger">Extent Changed</span>',
-                        '<span class="alert-danger">No usable exposure layer in current extent</span>',
-                        'alert-danger');
+                    '<span class="text-danger">Extent Changed</span>',
+                    '<span class="alert-danger">No usable exposure layer in current extent</span>',
+                    'alert-danger');
             }
-            else if(haz_count == 0){
+            else if (haz_count == 0) {
                 show_info_text(
-                        '<span class="text-danger">Extent Changed</span>',
-                        '<span class="alert-danger">No usable hazard layer in current extent</span>',
-                        'alert-danger');
+                    '<span class="text-danger">Extent Changed</span>',
+                    '<span class="alert-danger">No usable hazard layer in current extent</span>',
+                    'alert-danger');
             }
         }
 
-        function filter_layer(bounds){
+        function filter_layer(bounds) {
             var bound_param = [
-                    bounds.getSouthWest().lng,
-                    bounds.getSouthWest().lat,
-                    bounds.getNorthEast().lng,
-                    bounds.getNorthEast().lat
+                bounds.getSouthWest().lng,
+                bounds.getSouthWest().lat,
+                bounds.getNorthEast().lng,
+                bounds.getNorthEast().lat
             ];
             var url = '{% url "geosafe:layer-panel" bbox="9,9,9,9" %}';
             url = url.replace("9%2C9%2C9%2C9", JSON.stringify(bound_param)).replace("9,9,9,9", JSON.stringify(bound_param));
             show_info_text('Extent Changed', 'Filtering available layer for extent');
-            $.get(url, function(data){
+            $.get(url, function (data) {
                 var exposure_id = $(".exposure.section a.selected").attr('data-id');
                 var hazard_id = $(".hazard.section a.selected").attr('data-id');
                 var impact_id = $("#impact-option a.selected").attr('data-id');
-                $(".layer-list").replaceWith('<div class="layer-list">'+data+'</data>');
-                $(document).ready(function(){
+                $(".layer-list").replaceWith('<div class="layer-list">' + data + '</data>');
+                $(document).ready(function () {
                     exposure_layer_cbo = $("#id_exposure_layer");
                     hazard_layer_cbo = $("#id_hazard_layer");
                     aggregation_layer_cbo = $("#id_aggregation_layer");
@@ -746,70 +864,70 @@ $(document).ready(function () {
             });
         }
 
-        function show_info_text(title, content, context_class){
+        function show_info_text(title, content, context_class) {
             var $info_box = $(".info-box");
-            if(context_class){
+            if (context_class) {
                 $info_box.addClass(context_class);
             }
-            else{
+            else {
                 $info_box.attr('class', 'info-box text-center panel-body');
             }
             $info_box.find(".info-title").html(title);
             $info_box.find(".info-text").html(content);
         }
-        
+
         function dissmiss_info_text(title) {
-            if($(".info-box .info-title").text() == title){
+            if ($(".info-box .info-title").text() == title) {
                 show_info_text("", "");
             }
         }
 
-        function warn_analysis_zoom_limit(){
+        function warn_analysis_zoom_limit() {
             var zoom_level = map.getZoom();
             var title = 'Analysis Extent Too Big'
-            if(zoom_level < 10){
+            if (zoom_level < 10) {
                 show_info_text(title, 'You might want to zoom in to perform analysis.');
             }
-            else{
+            else {
                 dissmiss_info_text(title);
             }
         }
 
-        function run_analysis(){
+        function run_analysis() {
             var $keep = $("#confirm_save_analysis");
-            if($keep && $keep.prop('checked')){
+            if ($keep && $keep.prop('checked')) {
                 $("#id_keep").prop('checked', true);
             }
-            else{
+            else {
                 $("#id_keep").prop('checked', false);
             }
-            var $analysis_form = $(".report.section form");
-            $.post($analysis_form.attr('action'), $analysis_form.serialize(), function(data){
-                if(data && data.success){
+            var $analysis_form = $(".impact.section form");
+            $.post($analysis_form.attr('action'), $analysis_form.serialize(), function (data) {
+                if (data && data.success) {
                     window.location.href = data.redirect;
                 }
             });
         }
 
-        function show_analysis_summary(){
-            if(last_impact_id == undefined){
+        function show_analysis_summary() {
+            if (last_impact_id == undefined) {
                 show_info_text('Show Analysis Summary', 'Please select desired impact layer first, before viewing analysis summary.')
                 return;
             }
             var selected_impact_id = last_impact_id;
             var url = '{% url "geosafe:analysis-summary" impact_id=-1 %}';
             url = url.replace("-1", selected_impact_id);
-            $.get(url, function(data){
-                if(data){
+            $.get(url, function (data) {
+                if (data) {
                     $("#impact-card-modal").replaceWith(data);
                     $("#impact-card-modal").modal();
-                    var impact_layer_title = $("#impact-option a[data-id='"+selected_impact_id+"']").text();
-                    show_info_text('Show Analysis Summary', 'Showing summary for '+impact_layer_title);
+                    var impact_layer_title = $("#impact-option a[data-id='" + selected_impact_id + "']").text();
+                    show_info_text('Show Analysis Summary', 'Showing summary for ' + impact_layer_title);
 
-                    $(document).ready(function(){
+                    $(document).ready(function () {
 
-                        $(".save-analysis input").change(function(){
-                            var id=$(this).attr('data-id');
+                        $(".save-analysis input").change(function () {
+                            var id = $(this).attr('data-id');
                             var urlpattern = '{% url "geosafe:toggle-analysis-saved" analysis_id=-1 %}';
                             toggle_analysis_saved(urlpattern, id);
                         });
@@ -849,16 +967,16 @@ $(document).ready(function () {
 
             zoom_to_box(map, [0, 45, 0, -45]);
 
-            map.on('moveend', function(e){
+            map.on('moveend', function (e) {
                 filter_layer(map.getBounds());
             });
 
-            map.on('zoomend', function(e){
+            map.on('zoomend', function (e) {
                 filter_layer(map.getBounds());
                 warn_analysis_zoom_limit();
             });
 
-            map.on('click', function(e){
+            map.on('click', function (e) {
                 {# disable category popup #}
                 $(".option .list.show").removeClass("show");
             });
@@ -869,7 +987,7 @@ $(document).ready(function () {
                     stateName: 'hazard-top',
                     icon: 'fa-arrows-v',
                     title: 'Swap hazard and exposure order',
-                    onClick: function(control){
+                    onClick: function (control) {
                         hazard_layer.setZIndex(0);
                         exposure_layer.setZIndex(1);
                         control.state('exposure-top');
@@ -878,7 +996,7 @@ $(document).ready(function () {
                     stateName: 'exposure-top',
                     icon: 'fa-arrows-v',
                     title: 'Swap hazard and exposure order',
-                    onClick: function(control){
+                    onClick: function (control) {
                         hazard_layer.setZIndex(1);
                         exposure_layer.setZIndex(0);
                         control.state('hazard-top');
@@ -920,17 +1038,17 @@ $(document).ready(function () {
                 {% if analysis.get_task_result %}
                     {% if not analysis.get_task_state == 'SUCCESS' and not analysis.get_task_state == 'FAILURE' %}
                         {# Automatic check in 30 sec #}
-                        function check_analysis(){
+                        function check_analysis() {
                             var check_analysis_url = '{% url 'geosafe:check-analysis' analysis_id=analysis.id %}';
-                            $.get(check_analysis_url, function(data){
-                                if(data && data.impact_layer_id){
+                            $.get(check_analysis_url, function (data) {
+                                if (data && data.impact_layer_id) {
                                     {# refresh site #}
                                     window.location.reload();
                                 }
-                                else{
+                                else {
                                     setTimeout(check_analysis, 30000);
                                 }
-                            }).fail(function(){
+                            }).fail(function () {
                                 setTimeout(check_analysis, 30000);
                             });
                         }
@@ -940,5 +1058,5 @@ $(document).ready(function () {
             {% endif %}
 
         });
-    </script> 
+    </script>
 {% endblock %}

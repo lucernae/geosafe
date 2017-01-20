@@ -62,8 +62,8 @@ def retrieve_layers(purpose, category=None, bbox=None):
             # in case of swapped value
             Q(layer__bbox_x0__lte=bbox[2]) &
             Q(layer__bbox_x1__gte=bbox[0]) &
-            Q(layer__bbox_y0__gte=bbox[3]) &
-            Q(layer__bbox_y1__lte=bbox[1]) &
+            Q(layer__bbox_y0__gte=bbox[1]) &
+            Q(layer__bbox_y1__lte=bbox[3]) &
             Q(layer__bbox_x0__lte=F('layer__bbox_x1')) &
             Q(layer__bbox_y1__lte=F('layer__bbox_y0'))
         )

@@ -13,24 +13,24 @@ class RoadSummary(ImpactSummary):
         return int(self.total_roads())
 
     def total_roads(self):
-        for idx, val in enumerate(self.summary_attributes()):
+        for idx, val in enumerate(self.summary_dict()):
             if 'total' in val.lower():
                 if self.is_summary_exists():
                     return int(self.impact_data.get('impact summary').get(
-                        'fields')[0][idx])
+                        'fields')[idx][1])
         return 0
 
     def total_affected(self):
-        lowercase_keys = [k.lower() for k in self.summary_attributes()]
+        lowercase_keys = [k.lower() for k in self.summary_dict()]
         for idx, val in enumerate(lowercase_keys):
             if 'flooded' in val or 'closed' in val:
                 return int(self.impact_data.get('impact summary').get(
-                    'fields')[0][idx])
+                    'fields')[idx][1])
         return 0
 
     def breakdown_dict(self):
         ret_val = OrderedDict()
-        for idx, key in enumerate(self.summary_attributes()):
+        for idx, key in enumerate(self.summary_dict()):
             contain_total = 'total' in key.lower()
             contain_affected = 'affected' in key.lower()
             contain_not = 'not' in key.lower()
@@ -42,7 +42,7 @@ class RoadSummary(ImpactSummary):
                 continue
 
             ret_val[key] = int(self.impact_data.get('impact summary').get(
-                'fields')[0][idx])
+                'fields')[idx][1])
         return ret_val
 
     def category_css_class(self, category):

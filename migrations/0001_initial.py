@@ -17,6 +17,7 @@ class Migration(migrations.Migration):
             name='Analysis',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('user_title', models.CharField(help_text=b'Title to assign after analysis is generated.', max_length=255, null=True, verbose_name=b'User defined title for analysis', blank=True)),
                 ('impact_function_id', models.CharField(help_text=b'The ID of Impact Function used in the analysis.', max_length=100, verbose_name=b'ID of Impact Function')),
                 ('extent_option', models.IntegerField(default=2, help_text=b'Extent option for analysis.', verbose_name=b'Analysis extent', choices=[(1, b'Use intersection of hazard, exposure, and current view extent'), (2, b'Use intersection of hazard and exposure')])),
                 ('task_id', models.CharField(help_text=b'Task UUID that runs analysis', max_length=40, null=True, verbose_name=b'Task UUID', blank=True)),

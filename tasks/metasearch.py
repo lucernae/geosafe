@@ -13,7 +13,7 @@ import urlparse
 from zipfile import ZipFile
 
 import subprocess
-from celery.app import shared_task
+from celery.task import task
 from owslib.wfs import WebFeatureService
 
 from geonode.layers.utils import file_upload
@@ -40,7 +40,7 @@ def cleanup_metadata(metadata_string):
     return metadata_string.replace(inasafe_keywords, new_inasafe_keywords)
 
 
-@shared_task(
+@task(
     name='geosafe.tasks.metasearch.add_wcs_layer',
     queue='geosafe')
 def add_wcs_layer(
@@ -99,7 +99,7 @@ def add_wcs_layer(
     return saved_layer
 
 
-@shared_task(
+@task(
     name='geosafe.tasks.metasearch.add_wfs_layer',
     queue='geosafe')
 def add_wfs_layer(

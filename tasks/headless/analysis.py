@@ -10,6 +10,20 @@ __date__ = '2/3/16'
 LOGGER = logging.getLogger(__name__)
 
 
+class RemoteTaskException(Exception):
+    """Custom Exception for remote function.
+
+    This exception will be raised if the function were executed directly,
+    instead of using celery.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.message = (
+            'This function is intended to be executed by '
+            'celery task remotely')
+        super(RemoteTaskException, self).__init__(*args, **kwargs)
+
+
 @app.task(
     name='headless.tasks.inasafe_wrapper.filter_impact_function',
     queue='inasafe-headless')
@@ -28,7 +42,7 @@ def filter_impact_function(hazard=None, exposure=None):
     :return: The list of Impact Function ID
     :rtype: list(str)
     """
-    LOGGER.info('This function is intended to be executed by celery task')
+    raise RemoteTaskException()
 
 
 @app.task(
@@ -60,7 +74,7 @@ def run_analysis(hazard, exposure, function, aggregation=None,
     :return: Impact layer url
     :rtype: str
     """
-    LOGGER.info('This function is intended to be executed by celery task')
+    raise RemoteTaskException()
 
 
 @app.task(
@@ -82,4 +96,4 @@ def read_keywords_iso_metadata(metadata_url, keyword=None):
         only the requested keyword key if given
     :rtype: dict, str
     """
-    LOGGER.info('This function is intended to be executed by celery task')
+    raise RemoteTaskException()

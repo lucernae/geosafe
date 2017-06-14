@@ -1,0 +1,145 @@
+version: '2'
+
+services:
+
+
+  qgis-server:
+    image: kartoza/qgis-server:LTR
+    volumes:
+      - '../src/geonode:/usr/src/app'
+      - '../src/core:/usr/src/core'
+      - '../../geosafe:/usr/src/geosafe'
+      - '../src/otf-project:/opt/qgis-server/plugins/otf-project'
+      - './qgis-web:/var/www'
+      - './qgis-server-log:/tmp/qgis-server'
+    environment:
+      - DEBUG=True
+      - QGIS_LOG_FILE=/tmp/qgis-server/qgis.log
+      - QGIS_SERVER_LOG_FILE=/tmp/qgis-server/qgis-server.log
+      # Log level 0 is the lowest (catch all), 5 is the highest (only fatal error)
+      - QGIS_DEBUG=0
+      - QGIS_SERVER_LOG_LEVEL=0
+      # It is important to include this environment variable
+      # QGIS-Server:LTR cgi needs it
+      - QGIS_PROJECT_FILE=
+
+    network_mode: "bridge"
+
+  django:
+    volumes:
+      - '../../geosafe:/usr/src/geosafe'
+      - '../src/inasafe:/usr/src/inasafe'
+      - './inasafe/headless/output:/home/geosafe/impact_layers'
+      - '../src/otf-project:/opt/qgis-server/plugins'
+      - './pycharm_helpers/django:/root/.pycharm_helpers'
+    command: /usr/sbin/sshd -D
+    environment:
+      - CELERY_ALWAYS_EAGER=True
+      - SAFE_PACKAGE=/usr/src/inasafe/safe
+      - PYTHONPATH=/usr/src:/usr/src/app/:/usr/src/inasafe
+      - DEBUG=True
+      - SITEURL=http://172.17.0.1/
+      - OGC_BACKEND=geonode.qgis_server
+      - GEONODE_BASE_URL=http://django:8000/
+      - QGIS_SERVER_URL=http://qgis-server/
+      - USE_GEOSAFE=True
+
+    links:
+      - qgis-server
+      - inasafe-output
+
+
+
+  web:
+    ports:
+      # - "80:80"
+
+      - "80:80"
+
+
+  celery:
+    volumes:
+      - '../../geosafe:/usr/src/geosafe'
+      - '../src/inasafe:/usr/src/inasafe'
+      - './inasafe/headless/output:/home/geosafe/impact_layers'
+      - './pycharm_helpers/celery:/root/.pycharm_helpers'
+    environment:
+      - DEBUG=True
+      - SITEURL=http://172.17.0.1/
+      - OGC_BACKEND=geonode.qgis_server
+      - GEONODE_BASE_URL=http://django:8000/
+      - QGIS_SERVER_URL=http://qgis-server/
+      - USE_GEOSAFE=True
+
+    links:
+      - qgis-server
+
+  inasafe-output:
+    image: nginx
+    volumes:
+      - ./inasafe/headless/output:/usr/share/nginx/html/output
+    ports:
+      - "8081:80"
+    network_mode: "bridge"
+
+  inasafe-headless:
+    build: docker-inasafe-headless
+    restart: on-failure
+    working_dir: /home/src/inasafe
+    environment:
+      - C_FORCE_ROOT=True
+      - CELERY_ALWAYS_EAGER=True
+      - PYTHONPATH=/home/src/inasafe
+      - InaSAFEQGIS=/home/src/inasafe
+      - DISPLAY=:99
+      - INASAFE_HEADLESS_BROKER_HOST=amqp://guest:guest@rabbitmq:5672/
+      - INASAFE_HEADLESS_DEPLOY_OUTPUT_DIR=/home/output/
+      - INASAFE_HEADLESS_DEPLOY_OUTPUT_URL=http://inasafe-output/output/
+      - QGIS_LOG_FILE=/tmp/inasafe/realtime/logs/qgis.log
+      - QGIS_DEBUG_FILE=/tmp/inasafe/realtime/logs/qgis-debug.log
+      - QGIS_DEBUG=0
+      - INASAFE_WORK_DIR=/tmp/inasafe
+    volumes:
+      - '../src/inasafe:/home/src/inasafe'
+      - './inasafe/headless/output:/home/output'
+      - '../src/geonode/geonode/uploaded/layers:/home/geosafe/layers'
+      - './pycharm_helpers/inasafe-headless:/root/.pycharm_helpers'
+
+    command: /start-celery.sh prod inasafe-headless
+
+
+    links:
+      - rabbitmq:rabbitmq
+      - nginx:nginx
+    network_mode: "bridge"
+
+  inasafe-headless-analysis:
+    build: docker-inasafe-headless
+    restart: on-failure
+    working_dir: /home/src/inasafe
+    environment:
+      - C_FORCE_ROOT=True
+      - CELERY_ALWAYS_EAGER=True
+      - PYTHONPATH=/home/src/inasafe
+      - InaSAFEQGIS=/home/src/inasafe
+      - DISPLAY=:99
+      - INASAFE_HEADLESS_BROKER_HOST=amqp://guest:guest@rabbitmq:5672/
+      - INASAFE_HEADLESS_DEPLOY_OUTPUT_DIR=/home/output/
+      - INASAFE_HEADLESS_DEPLOY_OUTPUT_URL=http://inasafe-output/output/
+      - QGIS_LOG_FILE=/tmp/inasafe/realtime/logs/qgis.log
+      - QGIS_DEBUG_FILE=/tmp/inasafe/realtime/logs/qgis-debug.log
+      - QGIS_DEBUG=0
+      - INASAFE_WORK_DIR=/tmp/inasafe
+    volumes:
+      - '../src/inasafe:/home/src/inasafe'
+      - './inasafe/headless/output:/home/output'
+      - '../src/geonode/geonode/uploaded/layers:/home/geosafe/layers'
+      - './pycharm_helpers/inasafe-headless-analysis:/root/.pycharm_helpers'
+
+    command: /start-celery.sh prod inasafe-headless
+
+
+    links:
+      - rabbitmq:rabbitmq
+      - nginx:nginx
+    network_mode: "bridge"

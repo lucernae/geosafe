@@ -1,0 +1,75 @@
+# Geosafe is very dependent on docker-geosafe orchestration to setup all of its dependencies
+sudo: required
+
+language: python
+
+python:
+  - "2.7"
+
+virtualenv:
+  system_site_packages: true
+
+services:
+  - docker
+
+env:
+  - ALL_FILE: 'all.travis.geosafe.yml'
+
+branches:
+  only:
+    - 2.6.x
+
+before_install:
+  # install ansible
+  - sudo apt-get -y update
+  - sudo apt-get -y install libssl-dev
+  - sudo pip install ansible
+  - sudo pip install codecov
+  # clone docker-geosafe
+  - pwd
+  - ls ../
+  - echo ${TRAVIS_COMMIT}
+  - git log
+  - cd ../
+  - git clone --depth=50 https://github.com/kartoza/docker-geosafe.git
+  - cd docker-geosafe
+  - git submodule init
+  - git submodule sync
+  - git submodule update src/geonode
+  - git submodule update src/inasafe
+  - git submodule update src/otf-project
+
+install:
+  # setup files
+  - pwd
+  - cd deployment
+  - cp ansible/development/group_vars/${ALL_FILE} ansible/development/group_vars/all.yml
+  # Replace original reference of geosafe to this geosafe
+  - sed -i 's/\/src\/geosafe/\/..\/geosafe/g' ansible/development/group_vars/all.yml
+  # Run setup-ansible
+  - make setup-ansible ANSIBLE_ARGS="--extra-vars='ansible_sudo_pass=\"\"' --extra-vars='pycharm_version=\"\"' --skip-tags=development"
+  # Overwrite docker-compose.override.yml
+  - cp -f ../../geosafe/scripts/travis/docker-compose.override.yml docker-compose.override.yml
+  # show docker-compose.override.yml for debugging
+  - cat docker-compose.override.yml
+  - cd ../
+  - cd src/geonode
+  - make build
+  - make up
+  - make down
+  - cd ../../deployment
+  - make build
+  - make up
+  - until make sync; do echo "Retrying"; sleep 5; done
+  - docker-compose -p geonodedocker exec django pip install coverage
+  - docker-compose -p geonodedocker ps
+
+script:
+  # Test Geosafe app
+  - pwd
+  - docker-compose -p geonodedocker exec inasafe-headless nosetests -v headless --with-id
+  - docker-compose -p geonodedocker exec django coverage run --branch --source=geosafe manage.py test geosafe --noinput --liveserver=0.0.0.0:8000
+  - ls ../../geosafe
+
+after_success:
+  - codecov

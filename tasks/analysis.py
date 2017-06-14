@@ -11,7 +11,8 @@ from zipfile import ZipFile
 
 import requests
 import shutil
-from celery.app import shared_task
+
+from celery import chain
 from django.conf import settings
 from django.core.files.base import File
 from django.core.urlresolvers import reverse
@@ -20,6 +21,7 @@ from django.db.models.query_utils import Q
 from geonode.layers.models import Layer
 from geonode.layers.utils import file_upload
 from geosafe.models import Analysis, Metadata
+from geosafe.celery import app
 from geosafe.tasks.headless.analysis import read_keywords_iso_metadata
 from geosafe.tasks.headless.analysis import run_analysis
 
@@ -53,11 +55,15 @@ def download_file(url, user=None, password=None):
         return parsed_uri.path
 
 
-@shared_task(
+@app.task(
     name='geosafe.tasks.analysis.create_metadata_object',
-    queue='geosafe')
-def create_metadata_object(layer_id):
+    queue='geosafe',
+    bind=True)
+def create_metadata_object(self, layer_id):
     """Create metadata object of a given layer
+
+    :param self: Celery task instance
+    :type self: celery.app.task.Task
 
     :param layer_id: layer ID
     :type layer_id: int
@@ -65,26 +71,63 @@ def create_metadata_object(layer_id):
     :return: True if success
     :rtype: bool
     """
-    # Sleep 5 second to let layer post_save ends
-    # That way, the Layer can be accessed
-    time.sleep(5)
-    metadata = Metadata()
-    layer = Layer.objects.get(id=layer_id)
-    metadata.layer = layer
-    layer_url = reverse(
-        'geosafe:layer-metadata',
-        kwargs={'layer_id': layer_id})
-    layer_url = urlparse.urljoin(settings.GEONODE_BASE_URL, layer_url)
-    async_result = read_keywords_iso_metadata.delay(
-        layer_url, ('layer_purpose', 'hazard', 'exposure'))
-    keywords = async_result.get()
-    metadata.layer_purpose = keywords.get('layer_purpose', None)
-    metadata.category = keywords.get(metadata.layer_purpose, None)
-    metadata.save()
+    try:
+        layer = Layer.objects.get(id=layer_id)
+        # Now that layer exists, get InaSAFE keywords
+        layer_url = reverse(
+            'geosafe:layer-metadata',
+            kwargs={'layer_id': layer.id})
+        layer_url = urlparse.urljoin(settings.GEONODE_BASE_URL, layer_url)
+        # Execute in chain:
+        # Get InaSAFE keywords from InaSAFE worker
+        # Set Layer metadata according to InaSAFE keywords
+        read_keywords_iso_metadata_queue = read_keywords_iso_metadata.queue
+        set_layer_purpose_queue = set_layer_purpose.queue
+        tasks_chain = chain(
+            read_keywords_iso_metadata.s(
+                layer_url, ('layer_purpose', 'hazard', 'exposure')).set(
+                queue=read_keywords_iso_metadata_queue),
+            set_layer_purpose.s(layer_id).set(
+                queue=set_layer_purpose_queue)
+        )
+        tasks_chain.delay()
+    except Layer.DoesNotExist as e:
+        # Perhaps layer wasn't saved yet.
+        # Retry later
+        self.retry(exc=e, countdown=5)
     return True
 
 
-@shared_task(
+@app.task(
+    name='geosafe.tasks.analysis.set_layer_purpose',
+    queue='geosafe')
+def set_layer_purpose(keywords, layer_id):
+    """Set layer keywords based on what InaSAFE gave.
+
+    :param keywords: Keywords taken from InaSAFE metadata.
+    :type keywords: dict
+
+    :param layer_id: layer ID
+    :type layer_id: int
+
+    :return: True if success
+    :rtype: bool
+    """
+    layer = Layer.objects.get(id=layer_id)
+    try:
+        metadata = Metadata.objects.get(layer=layer)
+    except Metadata.DoesNotExist:
+        metadata = Metadata()
+        metadata.layer = layer
+
+    metadata.layer_purpose = keywords.get('layer_purpose', None)
+    metadata.category = keywords.get(metadata.layer_purpose, None)
+    metadata.save()
+
+    return True
+
+
+@app.task(
     name='geosafe.tasks.analysis.clean_impact_result',
     queue='geosafe')
 def clean_impact_result():
@@ -103,7 +146,7 @@ def clean_impact_result():
             i.delete()
 
 
-@shared_task(
+@app.task(
     name='geosafe.tasks.analysis.process_impact_result',
     queue='geosafe')
 def process_impact_result(analysis_id):
@@ -115,16 +158,6 @@ def process_impact_result(analysis_id):
     :return: True if success
     :rtype: bool
     """
-    # wait for process to return the result
-    # try_count = 0
-    # while try_count < 5:
-    #     time.sleep(5)
-    #     try:
-    #         impact_url = impact_url_result.get()
-    #         break
-    #     except:
-    #         try_count += 1
-
     analysis = Analysis.objects.get(id=analysis_id)
 
     hazard = analysis.get_layer_url(analysis.hazard_layer)

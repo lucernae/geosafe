@@ -17,7 +17,7 @@ from celery.task import task
 from owslib.wfs import WebFeatureService
 
 from geonode.layers.utils import file_upload
-from geosafe.tasks.analysis import download_file
+from geosafe.helpers.utils import download_file
 
 __author__ = 'Rizky Maulana Nugraha <lana.pcfre@gmail.com>'
 __date__ = '7/29/16'

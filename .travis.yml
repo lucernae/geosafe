@@ -67,8 +67,8 @@ install:
 script:
   # Test Geosafe app
   - pwd
-  - docker-compose -p geonodedocker exec inasafe-headless nosetests -v headless --with-id
-  - docker-compose -p geonodedocker exec django coverage run --branch --source=geosafe manage.py test geosafe --noinput --liveserver=0.0.0.0:8000
+#  - docker-compose -p geonodedocker exec inasafe-headless /bin/bash -c "cd /home/src/inasafe; source run-env-linux.sh /usr; nosetests -v headless --with-id"
+#  - docker-compose -p geonodedocker exec django coverage run --branch --source=geosafe manage.py test geosafe --noinput --liveserver=0.0.0.0:8000
   - ls ../../geosafe
 
 after_success:

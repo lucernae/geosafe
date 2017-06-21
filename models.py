@@ -1,16 +1,15 @@
 from __future__ import absolute_import
 
-import tempfile
+import os
 import urlparse
 
-from django.conf import settings
+from geosafe.app_settings import settings
 from django.core.files.base import File
 from django.core.urlresolvers import reverse
 from django.db import models
 from celery.result import AsyncResult
 
 from geonode.layers.models import Layer
-from geonode.people.models import Profile
 
 
 # geosafe
@@ -245,6 +244,11 @@ class Analysis(models.Model):
             kwargs={'layer_id': layer_id})
         layer_url = urlparse.urljoin(settings.GEONODE_BASE_URL, layer_url)
         return layer_url
+
+    @classmethod
+    def get_base_layer_path(cls, layer):
+        base_file, _ = layer.get_base_file()
+        return base_file.file.path
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None, run_analysis_flag=True):

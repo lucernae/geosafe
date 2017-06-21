@@ -1,26 +1,19 @@
 # coding=utf-8
 import json
-import os
-
-import shutil
 import logging
 import urllib
 import urlparse
 
 from django.http.response import HttpResponse, HttpResponseServerError, JsonResponse
 from django.shortcuts import render
-from owslib.iso import MD_Metadata
-from owslib.wcs import WebCoverageService
-
-from geonode.layers.utils import file_upload
-from geosafe.tasks.analysis import download_file
 from owslib import fes
-from owslib.csw import CatalogueServiceWeb, CswRecord
+from owslib.csw import CatalogueServiceWeb
+from owslib.iso import MD_Metadata
 
 from geosafe.forms import MetaSearchForm
-from geosafe.tasks import metasearch
-
 from geosafe.helpers.metasearch.csw_helper import csw_query_metadata_by_id
+from geosafe.helpers.utils import download_file
+from geosafe.tasks import metasearch
 
 __author__ = 'Rizky Maulana Nugraha <lana.pcfre@gmail.com>'
 

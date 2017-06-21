@@ -1,11 +1,9 @@
 import json
-
-import os
 import logging
+import os
 import tempfile
 from zipfile import ZipFile
 
-from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.db.models.expressions import F
 from django.db.models.query_utils import Q
@@ -15,16 +13,17 @@ from django.shortcuts import render
 from django.views.generic import (
     ListView, CreateView, DetailView)
 
+from geonode.layers.models import Layer
+from geosafe.app_settings import settings
+from geosafe.forms import (AnalysisCreationForm)
 from geosafe.helpers.impact_summary.polygon_people_summary import \
     PolygonPeopleSummary
-from geosafe.helpers.impact_summary.summary_base import ImpactSummary
-
-from geonode.layers.models import Layer
-from geosafe.forms import (AnalysisCreationForm)
 from geosafe.helpers.impact_summary.population_summary import \
     PopulationSummary
 from geosafe.helpers.impact_summary.road_summary import RoadSummary
 from geosafe.helpers.impact_summary.structure_summary import StructureSummary
+from geosafe.helpers.impact_summary.summary_base import ImpactSummary
+from geosafe.helpers.utils import get_layer_path
 from geosafe.models import Analysis, Metadata
 from geosafe.signals import analysis_post_save
 from geosafe.tasks.headless.analysis import filter_impact_function
@@ -279,11 +278,11 @@ def impact_function_filter(request):
             json.dumps([]), content_type="application/json")
 
     try:
-        exposure_layer = Layer.objects.get(id=exposure_id)
         hazard_layer = Layer.objects.get(id=hazard_id)
+        exposure_layer = Layer.objects.get(id=exposure_id)
 
-        hazard_url = Analysis.get_layer_url(hazard_layer)
-        exposure_url = Analysis.get_layer_url(exposure_layer)
+        hazard_url = get_layer_path(hazard_layer)
+        exposure_url = get_layer_path(exposure_layer)
 
         async_result = filter_impact_function.delay(
             hazard_url,
@@ -337,12 +336,16 @@ def layer_metadata(request, layer_id):
         base_file, _ = layer.get_base_file()
         if not base_file:
             return HttpResponseServerError()
-        base_file_path = base_file.file.path
-        xml_file_path = base_file_path.split('.')[0] + '.xml'
+        base_file_path, _ = os.path.splitext(base_file.file.path)
+        xml_file_path = base_file_path + '.xml'
         if not os.path.exists(xml_file_path):
             return HttpResponseServerError()
         with open(xml_file_path) as f:
-            return HttpResponse(f.read(), content_type='text/xml')
+            response = HttpResponse(f.read(), content_type='text/xml')
+            response['Content-Disposition'] = (
+                'attachment; filename="{filename}.xml"'.format(
+                    filename=base_file_path))
+            return response
 
     except Exception as e:
         LOGGER.exception(e)
@@ -367,8 +370,15 @@ def layer_archive(request, layer_id):
                     base_name,
                     layer_file.file.read())
 
+        base_file, _ = layer.get_base_file()
+        base_file_name, _ = os.path.splitext(
+            os.path.basename(base_file.file.path))
         with open(tmp) as f:
-            return HttpResponse(f.read(), content_type='application/zip')
+            response = HttpResponse(f.read(), content_type='application/zip')
+            response['Content-Disposition'] = (
+                'attachment; filename="{filename}.zip"'.format(
+                    filename=base_file_name))
+            return response
 
     except Exception as e:
         LOGGER.exception(e)

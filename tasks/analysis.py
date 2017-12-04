@@ -329,7 +329,8 @@ def process_impact_result(self, impact_url, analysis_id):
                 if ext in ['.shp', '.tif']:
                     # process this in the for loop to make sure it works only
                     # when we found the layer
-                    success = process_impact_layer(analysis, basename, dir_name, name)
+                    success = process_impact_layer(
+                        analysis, basename, dir_name, name)
                     break
 
             # cleanup
@@ -337,7 +338,7 @@ def process_impact_result(self, impact_url, analysis_id):
                 filepath = os.path.join(dir_name, name)
                 try:
                     os.remove(filepath)
-                except:
+                except BaseException:
                     pass
     else:
         # It means it is accessing an shp or tif directly

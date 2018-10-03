@@ -4,10 +4,15 @@ branch=True
 source=geosafe
 parallel=True
 omit=
-	migrations
-	scripts
-	static
-	templates
+	# Of course we omit test files coverage. It doesn't matter
+	*/test/*
+	*/tests/*
+
+	# No need to check coverage on these locations
+	*/migrations/*
+	*/scripts/*
+	*/static/*
+	*/templates/*
 concurrency=
 	thread
 	multiprocessing

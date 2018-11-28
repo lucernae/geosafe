@@ -300,10 +300,13 @@ class Analysis(models.Model):
         # chain state, iterate result
         if result.children:
             for child in result.children:
-                if child.state == 'PENDING':
-                    return self.task_state
-                else:
-                    return child.state
+                try:
+                    if child.state == 'PENDING':
+                        return self.task_state
+                    else:
+                        return child.state
+                except BaseException:
+                    return 'FAILURE'
         return self.task_state
 
     def get_default_impact_title(self):
@@ -387,6 +390,9 @@ class Analysis(models.Model):
             force_update=force_update,
             using=using,
             update_fields=update_fields)
+
+    def __unicode__(self):
+        return 'Analysis ID: {}'.format(self.id)
 
 
 # needed to load signals

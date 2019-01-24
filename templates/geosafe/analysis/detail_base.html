@@ -1,5 +1,6 @@
 {% extends 'geonode_base.html' %}
 {% load i18n %}
+{% load humanize %}
 {% load bootstrap_tags %}
 {% load leaflet_tags %}
 {% block extra_head %}
@@ -17,71 +18,172 @@
             </div>
             <div class="col-md-4">
                 <div>
-                    <p>{% trans "Exposure Layer:"  %} <a
-                            href="{% url 'layer_detail' analysis.exposure_layer.service_typename %}">{{ analysis.exposure_layer }}</a>
-                    </p>
 
-                    <p>{% trans "Hazard Layer:" %} <a
-                            href="{% url 'layer_detail' analysis.hazard_layer.service_typename %}">{{ analysis.hazard_layer }}</a>
-                    </p>
+                    {% if analysis.task_info and analysis.task_info.troubleshoot %}
 
-                    <p>{% trans "Aggregation Layer:" %} <a
-                            href="{% url 'layer_detail' analysis.aggregation_layer.service_typename %}">{{ analysis.aggregation_layer }}</a>
-                    </p>
+                        {% with troubleshoot=analysis.task_info.troubleshoot %}
 
-                    <p>{% trans "Impact Function ID:" %} {{ analysis.impact_function_id }}</p>
+                            {% include troubleshoot.template %}
 
-                    <p>{% trans "Extent:" %} {{ analysis.get_extent_option_display }}</p>
+                        {% endwith %}
 
-                    <p>{% trans "Impact Layer:" %}
-                        {% if not analysis.get_task_result %}
-                                {% trans "Analysis not yet running" %}
-                        {% elif analysis.get_task_state == 'SUCCESS' %}
-                            <a href="{% url 'layer_detail' layername=analysis.impact_layer.alternate %}">{{ analysis.impact_layer }}</a>
-                        {% else %}
-                            {% trans "Task Status:" %}
-                            <span class="label label-{{ analysis.get_label_class }}">
-                            {{ analysis.get_task_state }}
-                            </span>
-                        {% endif %}
-                        {% if analysis.get_task_result and analysis.get_task_result.state == "FAILURE" %}
-                            <div class="panel panel-default">
-                              <div class="panel-heading">
-                                <h3 class="panel-title">{% trans 'Error Detail' %}</h3>
-                              </div>
-                              <div class="panel-body">
-                                  <p>{{ analysis.get_task_result.result }}</p>
-                                  <p>{{ analysis.get_task_result.traceback }}</p>
-                              </div>
+                    {% endif %}
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">{% trans "Analysis Parameter Summary" %}</h3>
+                        </div>
+                        <div class="panel-body">
+                            <p>{% trans "Summary of parameters that is being used to calculate the analysis" %}</p>
+                        </div>
+                        <div class="list-group">
+                            <div class="list-group-item">
+                                <h4 class="list-group-item-heading">{% trans "Exposure Layer"  %}</h4>
+                                <a class="list-group-item-text" href="{% url 'layer_detail' analysis.exposure_layer.service_typename %}">
+                                    {{ analysis.exposure_layer }}
+                                </a>
                             </div>
-                        {% endif %}
-                    </p>
 
-                    <p>{% trans "Impact Map Report:" %}
-                        {% if analysis.report_map %}
-                            <a class="download-link" href="{% url 'geosafe:download-report' analysis_id=analysis.id data_type='map' %}" target="_blank">{% trans "Map Report" %}</a>
-                        {% else %}
-                            {% trans "There is no map report generated for this Impact Layer" %}
-                        {% endif %}
-                    </p>
+                            <div class="list-group-item">
+                                <h4 class="list-group-item-heading">{% trans "Hazard Layer" %}</h4>
+                                <a class="list-group-item-text" href="{% url 'layer_detail' analysis.hazard_layer.service_typename %}">
+                                    {{ analysis.hazard_layer }}
+                                </a>
+                            </div>
 
-                    <p>{% trans "Impact Table Report:" %}
-                        {% if analysis.report_table %}
-                            <a class="download-link" href="{% url 'geosafe:download-report' analysis_id=analysis.id data_type='table' %}" target="_blank">{% trans "Table Report" %}</a>
-                        {% else %}
-                            {% trans "There is no table report generated for this Impact Layer" %}
-                        {% endif %}
-                    </p>
 
-                    {% if analysis.get_task_result %}
-                        <p>
+                            <div class="list-group-item">
+                                <h4 class="list-group-item-heading">{% trans "Aggregation Layer" %}</h4>
+                                {% if analysis.aggregation_layer %}
+                                    <a class="list-group-item-text" href="{% url 'layer_detail' analysis.aggregation_layer.service_typename %}">
+                                        {{ analysis.aggregation_layer }}
+                                    </a>
+                                {% else %}
+                                    {% trans "Not Used" %}
+                                {% endif %}
+                            </div>
+
+                            <div class="list-group-item">
+                                <h4 class="list-group-item-heading">{% trans "Extent Type" %}</h4>
+                                <p class="list-group-item-text">{{ analysis.get_extent_option_display }}</p>
+                            </div>
+                            <div class="list-group-item">
+                                <h4 class="list-group-item-heading">{% trans "Extent" %}</h4>
+                                <p class="list-group-item-text">{% trans "Left:" %} {{ analysis.user_extent_bbox.0.0 }}</p>
+                                <p class="list-group-item-text">{% trans "Top:" %} {{ analysis.user_extent_bbox.0.1 }}</p>
+                                <p class="list-group-item-text">{% trans "Right:" %} {{ analysis.user_extent_bbox.1.0 }}</p>
+                                <p class="list-group-item-text">{% trans "Bottom:" %} {{ analysis.user_extent_bbox.1.1 }}</p>
+                                <p class="list-group-item-text">{% trans "Area:" %} {{ analysis.user_extent_area|intcomma }} km<sup>2</sup></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">{% trans "Impact Layer Analysis Tasks" %}</h3>
+                        </div>
+                        <div class="panel-body">
+                            <p>{% trans "Summary of Analysis progress" %}</p>
+                        </div>
+                        <div class="list-group">
+                            <div class="list-group-item">
+                                <h4 class="list-group-item-heading">{% trans "Task State" %}</h4>
+                                <p class="list-group-item-text">
+                                    {% if not analysis.get_task_result %}
+                                        {% trans "Analysis not yet running" %}
+                                    {% else %}
+                                        <span class="label label-{{ analysis.get_label_class }}">
+                                        {{ analysis.get_task_state }}
+                                        </span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            {% if analysis.get_task_result and not analysis.get_task_result.state == "SUCCESS" %}
+                            <div class="list-group-item">
+                                <h4 class="list-group-item-heading">{% trans "Task State Diagnostics" %}</h4>
+                                <div class="list-group-item-text">
+                                    {% if analysis.get_task_state == 'PENDING' %}
+                                        {% trans "Task is still running" %}
+                                    {% elif analysis.task_info and analysis.task_info.finished %}
+                                        <div class="well well-sm list-group-item-info">{{ analysis.task_info.result }}</div>
+                                        {% if analysis.task_info.traceback %}
+                                        <div class="well well-sm list-group-item-danger">{{ analysis.task_info.traceback|linebreaks }}</div>
+                                        {% endif %}
+                                    {% else %}
+                                        {% trans "Failed to collect task diagnostics." %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            <div class="list-group-item">
+                                <h4 class="list-group-item-heading">{% trans "Impact Layer" %}</h4>
+                                <p class="list-group-item-text">
+                                    {% if analysis.get_task_state == 'SUCCESS' %}
+                                        <a href="{% url 'layer_detail' layername=analysis.impact_layer.alternate %}">{{ analysis.impact_layer }}</a>
+                                    {% else %}
+                                        {% trans "Impact layer not yet generated." %}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">{% trans "Impact Report Tasks" %}</h3>
+                        </div>
+                        <div class="panel-body">
+                            <p>{% trans "Summary of Impact Report progress" %}</p>
+                        </div>
+                        <div class="list-group">
+                            <div class="list-group-item">
+                                <h4 class="list-group-item-heading">{% trans "Impact Map Report" %}</h4>
+                                {% if analysis.report_map %}
+                                <a class="list-group-item-text download-link" href="{% url 'geosafe:download-report' analysis_id=analysis.id data_type='map' %}" target="_blank">
+                                    {% trans "Map Report" %}
+                                </a>
+                                {% else %}
+                                <p class="list-group-item-text">
+                                    {% trans "Not yet generated" %}
+                                </p>
+                                {% endif %}
+                            </div>
+                            <div class="list-group-item">
+                                <h4 class="list-group-item-heading">{% trans "Impact Table Report" %}</h4>
+                                {% if analysis.report_table %}
+                                <a class="list-group-item-text download-link" href="{% url 'geosafe:download-report' analysis_id=analysis.id data_type='table' %}" target="_blank">
+                                    {% trans "Table Report" %}
+                                </a>
+                                {% else %}
+                                <p class="list-group-item-text">
+                                    {% trans "Not yet generated" %}
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">{% trans "Action" %}</h3>
+                        </div>
+                        <div class="panel-body">
+                            {% if analysis.get_task_result %}
                             <form action="{% url 'geosafe:rerun-analysis' analysis_id=analysis.id %}" method="post">
                                 {% csrf_token %}
                                 <input type="hidden" id="analysis_id" value="{{ analysis.id }}" />
                                 <button type="submit" class="btn btn-primary">{% trans "Rerun Analysis" %}</button>
                             </form>
-                        </p>
-                    {% endif %}
+                            {% endif %}
+                            {% if not analyis.get_task_state == 'SUCCESS' and user.is_superuser %}
+                            <form action="{% url 'geosafe:cancel-analysis' analysis_id=analysis.id %}" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" id="analysis_id" value="{{ analysis.id }}" />
+                                <button type="submit" class="btn btn-primary">{% trans "Cancel Analysis" %}</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -144,11 +246,16 @@
             add_layer(map, hazard_layer);
             add_layer(map, aggregation_layer);
             add_layer(map, impact_layer);
-            {% if analysis.aggregation_layer.bbox_string %}
-                zoom_to_box(map, [{{ analysis.aggregation_layer.bbox_string }}]);
-            {% else %}
-                zoom_to_box(map, [{{ analysis.exposure_layer.bbox_string }}]);
-            {% endif %}
+
+            var bbox = [{{ analysis.user_extent }}];
+            var bounds = [[bbox[1], bbox[0]], [bbox[3], bbox[2]]];
+            var bound_rect = L.rectangle(bounds, {
+                color: '#00ff78',
+                weight: 5,
+                fill: false
+            });
+            bound_rect.addTo(map);
+            zoom_to_box(map, [{{ analysis.user_extent }}]);
 
             {% if analysis.get_task_result %}
                 {% if not analysis.get_task_result.successful and not analysis.get_task_result.failed %}

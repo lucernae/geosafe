@@ -6,15 +6,19 @@ import urlparse
 from datetime import datetime
 
 from celery.result import AsyncResult
+from django.contrib.gis.geos import GEOSGeometry
 from django.core.files.base import File
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.utils.translation import ugettext as _
+from geonode.utils import bbox_to_wkt
 
 from geonode.layers.models import Layer
 from geosafe.app_settings import settings
 
 # flat xpath for the keyword container tag
+from geosafe.helpers.suggestions.error_suggestions import AnalysisError
+
 ISO_METADATA_INASAFE_KEYWORD_TAG = (
     '//gmd:supplementalInformation/inasafe')
 ISO_METADATA_INASAFE_PROVENANCE_KEYWORD_TAG = (
@@ -236,12 +240,10 @@ class Analysis(models.Model):
     )
 
     start_time = models.DateTimeField(
-        'start_time',
         default=datetime.now
     )
 
     end_time = models.DateTimeField(
-        'end_time',
         default=datetime.now
     )
 
@@ -272,6 +274,29 @@ class Analysis(models.Model):
         :rtype: celery.result.AsyncResult
         """
         return AsyncResult(self.task_id)
+
+    def user_extent_bbox(self):
+        """Return user extent as BBOX array.
+
+        Format: [[left,top], [right, bottom]]
+        """
+        bbox_arr = self.user_extent.split(',')
+        bbox_float = [float(i) for i in bbox_arr]
+        return [[bbox_float[0], bbox_float[1]],
+                [bbox_float[2], bbox_float[3]]]
+
+    def user_extent_area(self):
+        """Return user extent area in meter square."""
+        bbox_float = self.user_extent_bbox()
+        extent_geom = GEOSGeometry(
+            bbox_to_wkt(
+                bbox_float[0][0], bbox_float[1][0],
+                bbox_float[0][1], bbox_float[1][1]), srid=4326)
+        # Check the size of the extent
+        # convert to EPSG:3410 for equal area projection
+        extent_geom.transform('3410')
+        # Return in km^2
+        return extent_geom.area / 1000000
 
     def get_label_class(self):
         state = self.get_task_state()
@@ -399,6 +424,122 @@ class Analysis(models.Model):
 
     def __unicode__(self):
         return 'Analysis ID: {}'.format(self.id)
+
+
+class AnalysisTaskInfo(models.Model):
+    """Represents Analysis Task information."""
+
+    analysis = models.OneToOneField(
+        Analysis,
+        related_name='task_info')
+
+    start = models.DateTimeField(
+        default=datetime.now
+    )
+
+    end = models.DateTimeField(
+        default=datetime.now
+    )
+
+    finished = models.BooleanField()
+
+    result = models.TextField()
+
+    exception_class = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True
+    )
+
+    traceback = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    def duration(self):
+        if self.finished:
+            return self.end - self.start
+        return datetime.now() - self.start
+
+    @classmethod
+    def iterate_task_children(cls, result):
+        """Perform DFS iteration of task children to search current task."""
+        if not result:
+            yield None
+
+        # yield the first task (root)
+        yield result
+
+        # yield children if any
+        children = result.children
+        if not children:
+            yield None
+
+        for c in children:
+            # since the child is also a task result, we iterate it again
+            # by DFS
+            it = cls.iterate_task_children(c)
+            while True:
+                cur_result = next(it)
+                if not cur_result:
+                    # if no next task result, break out of while loop
+                    break
+                # yield current task result
+                yield cur_result
+
+    def task_result_missing(self):
+        result = self.analysis.get_task_result()
+        return result.info is None and result.result is None
+
+    def update_info(self):
+        if self.task_result_missing():
+            # We don't have anything to update if task result is missing
+            return
+        # track current result if not pending
+        result = self.analysis.get_task_result()
+        it = self.iterate_task_children(result)
+        while True:
+            result = next(it)
+            if result:
+                self.finished = True
+                self.result = str(result.result)
+
+                if result.state == 'FAILURE':
+                    # On failure the result is the Exception class
+                    module_name = result.result.__class__.__module__
+                    class_name = result.result.__class__.__name__
+                    self.exception_class = '.'.join([module_name, class_name])
+                    self.traceback = str(result.traceback)
+
+                self.start = self.analysis.start_time
+                self.end = self.analysis.end_time or datetime.now()
+
+                self.save()
+
+                if not result.state == 'SUCCESS':
+                    # On the first known non-pending and non-success task
+                    # break out of loop because we only need to report the
+                    # first one we find.
+                    break
+
+    @classmethod
+    def create_from_analysis(cls, analysis):
+        defaults = {
+            'start': analysis.start_time,
+            'end': analysis.end_time,
+            'finished': not analysis.task_state == 'PENDING',
+        }
+        task_info, created = AnalysisTaskInfo.objects.get_or_create(
+            analysis=analysis,
+            defaults=defaults)
+        return task_info
+
+    def troubleshoot(self):
+        """Attempt to get troubleshoot suggestions."""
+        return AnalysisError.attempt_troubleshoot_message(self)
+
+    def __unicode__(self):
+        return 'Analysis: {0}'.format(self.analysis.id)
 
 
 # needed to load signals

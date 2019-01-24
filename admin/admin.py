@@ -1,7 +1,7 @@
 # coding=utf-8
 from django.contrib import admin
 
-from geosafe.models import Metadata, Analysis
+from geosafe.models import Metadata, Analysis, AnalysisTaskInfo
 
 
 # Register your models here.
@@ -29,5 +29,19 @@ class AnalysisAdmin(admin.ModelAdmin):
     )
 
 
+class AnalysisTaskInfoAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'id'
+        'analysis',
+        'finished',
+        'start',
+        'end',
+        'result',
+        'traceback'
+    )
+
+
 admin.site.register(Metadata, MetadataAdmin)
 admin.site.register(Analysis, AnalysisAdmin)
+admin.site.register(AnalysisTaskInfo)

@@ -3,8 +3,64 @@
 import os
 from ast import literal_eval
 from django.utils.translation import ugettext_lazy as _
+from celery.schedules import crontab
+from kombu import Queue
 
 _LOCAL_ROOT = os.path.abspath(os.path.dirname(__file__))
+
+# Geosafe settings
+# App specific
+# Geosafe - Celery settings
+
+# Pick the correct broker for relaying commands to InaSAFE Headless
+BROKER_URL = os.environ['BROKER_URL']
+CELERY_RESULT_BACKEND = BROKER_URL
+
+# Specific celery  Can be modified accordingly or leave as
+# default
+CELERY_TASK_ALWAYS_EAGER = literal_eval(os.environ.get(
+    'CELERY_TASK_ALWAYS_EAGER', 'False'))
+CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
+CELERY_IGNORE_RESULT = False
+CELERY_SEND_EVENTS = True
+CELERY_TASK_RESULT_EXPIRES = 24 * 3600
+CELERY_DISABLE_RATE_LIMITS = True
+CELERY_DEFAULT_QUEUE = "default"
+CELERY_DEFAULT_EXCHANGE = "default"
+CELERY_DEFAULT_EXCHANGE_TYPE = "direct"
+CELERY_DEFAULT_ROUTING_KEY = "default"
+CELERY_CREATE_MISSING_QUEUES = True
+CELERYD_CONCURRENCY = 1
+CELERYD_PREFETCH_MULTIPLIER = 1
+CELERYD_POOL_RESTARTS = True
+
+# Celery config
+CELERY_TASK_SERIALIZER = 'pickle'
+CELERY_ACCEPT_CONTENT = {'pickle'}
+CELERY_RESULT_SERIALIZER = 'pickle'
+
+# Defining Celery queue to avoid clash between tasks. Leave as default
+CELERY_QUEUES = [
+    Queue('default', routing_key='default'),
+    Queue('cleanup', routing_key='cleanup'),
+    Queue('update', routing_key='update'),
+    Queue('email', routing_key='email'),
+    Queue('inasafe-headless', routing_key='inasafe-headless'),
+    Queue('geosafe', routing_key='geosafe'),
+]
+
+# Schedule for periodic tasks
+CELERYBEAT_SCHEDULE = {
+    # executes every night at 0:0 AM
+    'clean-impact-nightly': {
+        'task': 'geosafe.tasks.analysis.clean_impact_result',
+        'schedule': crontab(hour='0', minute='0')
+    },
+    'check-analysis-tasks-hourly': {
+        'task': 'geosafe.tasks.analysis.check_tasks',
+        'schedule': crontab(minute='0')
+    }
+}
 
 # Selenium
 SELENIUM_DRIVER = os.environ.get('SELENIUM_DRIVER')

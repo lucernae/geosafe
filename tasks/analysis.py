@@ -28,13 +28,13 @@ from geonode.layers.models import Layer, cov_exts, vec_exts
 from geonode.layers.utils import file_upload
 from geonode.qgis_server.helpers import qgis_server_endpoint
 from geosafe.app_settings import settings
-from geosafe.celery import app
+from geosafe.celery_app import app
 from geosafe.helpers.utils import (
     download_file, get_layer_path, get_impact_path,
     copy_inasafe_metadata, send_analysis_result_email)
 from geosafe.models import Analysis, Metadata, \
     ISO_METADATA_INASAFE_KEYWORD_TAG, \
-    ISO_METADATA_INASAFE_PROVENANCE_KEYWORD_TAG
+    ISO_METADATA_INASAFE_PROVENANCE_KEYWORD_TAG, AnalysisTaskInfo
 from geosafe.tasks.headless.analysis import (
     get_keywords, generate_report, run_analysis, RESULT_SUCCESS)
 from geosafe.utils import substitute_layer_order
@@ -440,15 +440,23 @@ def process_impact_result(self, impact_result, analysis_id):
             locale=analysis.language_code)
 
         retries = 10
-        for _ in range(retries):
+        for r in range(retries):
             try:
+
                 with allow_join_result():
                     report_metadata = result.get().get('output', {})
                 break
             except BaseException as e:
+                if result.state == 'FAILURE':
+                    raise e
                 LOGGER.exception(e)
                 time.sleep(5)
                 result = AsyncResult(result.id)
+                if r >= retries - 1:
+                    # Generate report has failed.
+                    # We need to reraise the error so we know something is
+                    # wrong
+                    raise e
 
         for product_key, products in report_metadata.iteritems():
             for report_key, report_url in products.iteritems():
@@ -720,6 +728,9 @@ def process_impact_layer(
         'end_time',
         'impact_layer'
     ])
+    analysis.refresh_from_db()
+    task_info = AnalysisTaskInfo.create_from_analysis(analysis)
+    task_info.update_info()
     if current_impact:
         current_impact.delete()
     success = True
@@ -795,3 +806,21 @@ def process_impact_report(analysis, report_metadata):
         pass
 
     return success
+
+
+@app.task(
+    name='geosafe.tasks.analysis.check_tasks',
+    queue='geosafe')
+def check_tasks():
+    """Check the state of analysis task and gather info.
+    """
+    analysis = Analysis.objects.exclude(task_state='SUCCESS')
+
+    for a in analysis:
+
+        try:
+            task_info = a.task_info
+        except AnalysisTaskInfo.DoesNotExist:
+            task_info = AnalysisTaskInfo.create_from_analysis(a)
+
+        task_info.update_info()

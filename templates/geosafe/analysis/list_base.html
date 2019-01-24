@@ -91,6 +91,7 @@
                         <th>{% trans "Save" %}</th>
                     {% endif %}
                     <th>{% trans "Download" %}</th>
+                    <th>{% trans "Analysis Detail" %}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -137,7 +138,7 @@
                                         <button type="submit" class="btn btn-primary">{% trans "Rerun Analysis" %}</button>
                                     </form>
                                 </div>
-                                {% elif analysis.get_task_state == 'PENDING' and user.is_superuser %}
+                                {% elif not analysis.get_task_state == 'SUCCESS' and user.is_superuser %}
                                 <div>
                                     <form action="{% url 'geosafe:cancel-analysis' analysis_id=analysis.id %}" method="post">
                                         {% csrf_token %}
@@ -187,6 +188,11 @@
                             {% else %}
                                 {% trans "Result not yet created" %}
                             {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'geosafe:analysis-detail' pk=analysis.pk %}">
+                                {% trans "Diagnostic page" %}
+                            </a>
                         </td>
                     </tr>
                 {% endfor %}
